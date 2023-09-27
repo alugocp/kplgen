@@ -19,18 +19,27 @@ def kpl_generate(filepath):
         output.write(f'<ColorSet name="{name}" rows="20" version="1.0" readonly="false" comment="" columns="16">\n')
 
         # Generate an entry for each RGB color in the input image
-        for i, pair in enumerate(img.getcolors()):
-            _, color = pair
-            r, g, b = color
-            r /= 255
-            g /= 255
-            b /= 255
-            x = i % 20
-            y = int(i / 20)
-            output.write(f' <ColorSetEntry id="{i}" name="Color {i}" bitdepth="U8" spot="false">\n')
-            output.write(f'  <RGB r="{r}" b="{b}" g="{g}" space="sRGB-elle-V2-srgbtrc.icc"/>\n')
-            output.write(f'  <Position column="{x}" row="{y}"/>\n')
-            output.write(f' </ColorSetEntry>\n')
+        recorded_colors = set()
+        width, height = img.size
+        for x in range(width):
+            for y in range(height):
+                r, g, b = img.getpixel((x, y))
+                if (r, g, b) not in recorded_colors:
+                    recorded_colors.add((r, g, b))
+                    r /= 255
+                    g /= 255
+                    b /= 255
+
+                    # Calculate this color entry's index, column, and row
+                    i = len(recorded_colors) - 1
+                    col = i % 20
+                    row = int(i / 20)
+
+                    # Write this color entry in colorset.xml
+                    output.write(f' <ColorSetEntry id="{i}" name="Color {i}" bitdepth="U8" spot="false">\n')
+                    output.write(f'  <RGB r="{r}" b="{b}" g="{g}" space="sRGB-elle-V2-srgbtrc.icc"/>\n')
+                    output.write(f'  <Position column="{col}" row="{row}"/>\n')
+                    output.write(f' </ColorSetEntry>\n')
 
         # Close the top-level XML tag
         output.write('</ColorSet>\n')
